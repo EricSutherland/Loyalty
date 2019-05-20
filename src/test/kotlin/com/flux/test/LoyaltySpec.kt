@@ -40,6 +40,42 @@ class LoyaltySpec : StringSpec() {
             response.first().paymentsGiven.first() shouldBe 100
         }
 
+        "Cheapest item is redeemed first" {
+            val receiptItems: List<Item> = 1.rangeTo(5).map { x -> Item("1",  x.toLong(), 1) }
+            val receipt = Receipt(merchantId = merchantId, accountId = accountId, items = receiptItems)
+            val response = implementation.apply(receipt)
+
+            response shouldHaveSize (1)
+            response.first().stampsGiven shouldBe 4
+            response.first().currentStampCount shouldBe 0
+            response.first().paymentsGiven shouldHaveSize 1
+            response.first().paymentsGiven.first() shouldBe 1
+        }
+
+        "Only applies to the items on the scheme" {
+            val receiptItems: List<Item> = listOf(
+                Item("1",  100, 1),
+                Item("2",  100, 1),
+                Item("3",  100, 1)
+            )
+            val receipt = Receipt(merchantId = merchantId, accountId = accountId, items = receiptItems)
+            val response = implementation.apply(receipt)
+
+            response shouldHaveSize (1)
+            response.first().stampsGiven shouldBe 2
+            response.first().currentStampCount shouldBe 2
+        }
+
+        "Applies stamps for the total quantity" {
+            val receipt = Receipt(merchantId = merchantId, accountId = accountId, items = listOf(Item("1", 100, 2)))
+
+            val response = implementation.apply(receipt)
+
+            response shouldHaveSize (1)
+            response.first().stampsGiven shouldBe 2
+            response.first().currentStampCount shouldBe 2
+        }
+
         "Stores the current state for an account" {
             val receipt = Receipt(merchantId = merchantId, accountId = accountId, items = listOf(Item("1", 100, 1)))
 
@@ -59,7 +95,8 @@ class LoyaltySpec : StringSpec() {
         private val merchantId: MerchantId = UUID.randomUUID()
 
         private val schemeId: SchemeId = UUID.randomUUID()
-        private val schemes = listOf(Scheme(schemeId, merchantId, 4, listOf("1")))
+        private val schemeItemIds: List<String> = listOf("1", "2")
+        private val schemes = listOf(Scheme(schemeId, merchantId, 4, schemeItemIds))
     }
 
 }
