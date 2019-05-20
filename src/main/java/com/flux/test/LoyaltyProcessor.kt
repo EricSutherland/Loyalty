@@ -5,15 +5,15 @@ import com.flux.test.model.*
 class LoyaltyProcessor(scheme: List<Scheme>) : ImplementMe {
     override var schemes: List<Scheme> = scheme
 
-    var loyaltyCards: MutableList<LoyaltyCard> = mutableListOf()
+    private var loyaltyCards: MutableList<LoyaltyCard> = mutableListOf()
 
    override fun apply(receipt: Receipt): List<ApplyResponse>{
-       val schemeItems: Map<Scheme, List<String>>  =  filterMerchantItems(receipt.merchantId)
+       val schemeItems: List<Scheme>  =  schemes.filter { scheme: Scheme -> scheme.merchantId == scheme.merchantId }
        val response: MutableList<ApplyResponse> = mutableListOf()
 
-       schemeItems.forEach { currentScheme, schemeItemIds ->
+       schemeItems.forEach { currentScheme: Scheme ->
            val card = getLoyaltyCard(currentScheme.id, receipt.accountId)
-           val redeemableItems: List<Item> = sortRedeemableItems(receipt, schemeItemIds)
+           val redeemableItems: List<Item> = sortRedeemableItems(receipt, currentScheme.skus)
 
            response.add(calculateSchemeStamps(currentScheme, card, redeemableItems))
        }
@@ -21,19 +21,13 @@ class LoyaltyProcessor(scheme: List<Scheme>) : ImplementMe {
    }
 
     override fun state(accountId: AccountId): List<StateResponse> {
-        var accountCards = loyaltyCards.filter { loyaltyCard: LoyaltyCard -> loyaltyCard.accountId == accountId }
+        val accountCards = loyaltyCards.filter { loyaltyCard: LoyaltyCard -> loyaltyCard.accountId == accountId }
         val response: MutableList<StateResponse> = mutableListOf()
 
         accountCards.forEach { loyaltyCard: LoyaltyCard ->
             response.add(StateResponse(loyaltyCard.schemeId, loyaltyCard.stampCount, loyaltyCard.paymentsAwarded))
         }
         return response
-    }
-
-    private fun filterMerchantItems (merchantId: MerchantId): Map<Scheme, List<String>> {
-        val merchantSchemes = schemes.filter { scheme: Scheme -> merchantId == scheme.merchantId }
-
-        return merchantSchemes.map { scheme: Scheme -> scheme to scheme.skus }.toMap()
     }
 
     private fun getLoyaltyCard(schemeId: SchemeId, accountId: AccountId): LoyaltyCard {
