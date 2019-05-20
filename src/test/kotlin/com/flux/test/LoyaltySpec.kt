@@ -14,7 +14,6 @@ import java.util.UUID
 
 class LoyaltySpec : StringSpec() {
 
-    val implementation: ImplementMe = TODO("Create your instance here, if you are a Java person, drop the new keyword and the ;.  e.g. `new MyImpl();` becomes `MyImpl(schemes)`")
 
     init {
         "Applies a stamp" {
