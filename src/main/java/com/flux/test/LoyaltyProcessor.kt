@@ -21,7 +21,13 @@ class LoyaltyProcessor(scheme: List<Scheme>) : ImplementMe {
    }
 
     override fun state(accountId: AccountId): List<StateResponse> {
-        TODO("implement")
+        var accountCards = loyaltyCards.filter { loyaltyCard: LoyaltyCard -> loyaltyCard.accountId == accountId }
+        val response: MutableList<StateResponse> = mutableListOf()
+
+        accountCards.forEach { loyaltyCard: LoyaltyCard ->
+            response.add(StateResponse(loyaltyCard.schemeId, loyaltyCard.stampCount, loyaltyCard.paymentsAwarded))
+        }
+        return response
     }
 
     private fun filterMerchantItems (merchantId: MerchantId): Map<Scheme, List<String>> {
@@ -74,7 +80,9 @@ class LoyaltyProcessor(scheme: List<Scheme>) : ImplementMe {
         }
 
         for (count in 1..redemptions) {
-            payments.add(redeemableItems[count - 1].price)
+            val award: Long = redeemableItems[count - 1].price
+            payments.add(award)
+            loyaltyCard.awardPayment(award)
         }
 
         return ApplyResponse(scheme.id, loyaltyCard.stampCount, stampsGiven, payments)

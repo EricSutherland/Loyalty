@@ -14,6 +14,7 @@ import java.util.UUID
 
 class LoyaltySpec : StringSpec() {
 
+    val implementation: ImplementMe = LoyaltyProcessor(schemes)
 
     init {
         "Applies a stamp" {
